@@ -1,0 +1,18 @@
+{
+	"PHP": {
+		"PHP": {
+			"prefix": "php",
+			"body": [
+				"<?php $0 ?>",
+			],
+			"description": "php"
+		},
+		"nPHP": {	
+			"prefix": "nphp",
+			"body": [
+				"<?php\n$0\n?>",
+			],
+			"description": "nphp"
+		},
+	}
+}
