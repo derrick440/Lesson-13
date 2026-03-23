@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bootstrap demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+  <script src="https://unpkg.com/vue@3"></script>
+
+  <style>
+    .bingoBall {
+      height: 90px;
+      width: 90px;
+      float: left;
+      display: block;
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
+      text-align: center;
+      background-image: url(ball.gif);
+      color: #c03;
+      font-weight: bold;
+      line-height: 80px;
+      font-size: 50px;
+      cursor: pointer;
+    }
+
+    #bingoSetting {
+      background-image: url('side01.png');
+      background-repeat: no-repeat;
+      text-align: center;
+      background-position: 10px 5px;
+      padding-top: 8%;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="bingoContent" class="container" style="margin-top: 2%;">
+    <div class="row" style="border: solid 1px red;min-height: 600px;">
+      <div id="bingoArea" class="col-8 col-sm-9" style="border-right: solid 1px red;">
+        <div v-for="(item,index) in numList" class="bingoBall" title="點一下刪除我" @click="deleteBall(index)" :key="index">
+          <span v-if="lastBall == item">{{displayNumber01}}</span>
+          <span v-else>{{item}}</span>
+        </div>
+      </div>
+      <div id="bingoSetting" class="col-4 col-sm-3">
+        <div id="controlBlock" class="mt-4">
+          <div id="gameSetting">
+            <div class="input-group input-group-sm mt-2" v-if="setRange">
+              <div class="input-group-prepend">
+                <span class="input-group-text">範圍:1~</span>
+              </div>
+              <input type="number" class="form-control" min="1" style="min-width: 20px;" v-model.number="rangeMax">
+            </div>
+            <div class="input-group input-group-sm mt-2" v-if="setMode">
+              <div class="input-group-prepend">
+                <span class="input-group-text">模式:</span>
+              </div>
+              <select name="" id="" class="form-select" v-model="selMode" v-on:change="SetModeChange();">
+                <option value="0">手動輸入</option>
+                <option value="1">自動輸入</option>
+              </select>
+            </div>
+            <div class="input-group input-group-sm mt-2" v-if="autoSetting">
+              <div class="input-group-prepend">
+                <span class="input-group-text">停止方式:</span>
+              </div>
+              <select name="" id="" class="form-select" v-model="stopMode" v-on:change="StopModeChange();">
+                <option value="0">手動停止搖彩</option>
+                <option value="1">自動停止搖彩</option>
+              </select>
+            </div>
+            <div class="input-group input-group-sm mt-2" v-if="setanimeTime">
+              <div class="input-group-prepend"><span class="input-group-text">動畫長度:</span>
+              </div>
+              <select name="" id="" class="form-select" v-model="animeTime">
+                <option value="1">1秒</option>
+                <option value="2">2秒</option>
+                <option value="3">3秒</option>
+                <option value="4">4秒</option>
+                <option value="5">5秒</option>
+              </select>
+            </div>
+
+          </div>
+          <div class="mt-2" v-if="rightBtn">
+            <button class="btn btn-success btn-sm" type="button" v-on:click="gameInit()">確定開始</button>
+          </div>
+        </div>
+        <div id="manualInput" class="input-group input-group-sm" v-if="manualMode">
+          <div class="input-group-prepend">
+            <span class="input-group-text">號碼:</span>
+          </div>
+          <input type="number" name="" id="" class="form-control" min="0" style="min-width: 20px;"
+            v-model.number="valueInput"><br>
+          <button type="button" class="btn btn-warning btn-sm text-white" v-on:click="AddBall()">輸入彩球</button>
+        </div>
+        <div v-if="autoInput">
+          <button type="button" class="btn btn-info btn-sm text-white" v-if="randStartBtn"
+            v-on:click="RandomValue();">產生彩球</button>
+          <button type="button" class="btn btn-danger btn-sm" v-if="randEndBtn" v-on:click="StopAnime();">停止搖彩</button>
+        </div>
+        <div v-if="EnballCount">
+          目前開彩球個數: <span>{{ballCount}}</span><br>
+          預計開彩球個數: <span>{{nRange}}</span>
+        </div>
+        <div class="mt-2" v-if="newGame">
+          <button type="button" class="btn btn-primary btn-sm" v-on:click="Reload();">開新遊戲</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+<script lang="javascript">
+  const newVue3 = Vue.createApp({
+    data() {
+      return {
+        setRange: true,
+        rangeMax: 75,
+        setMode: true,
+        selMode: 0,
+        autoSetting: false,
+        stopMode: 0,
+
+        setanimeTime: false,
+        animeTime: 1,
+        rightBtn: true,
+
+        manualMode: false,
+        valueInput: '',
+        autoInput: false,
+        randStartBtn: true,
+        randEndBtn: false,
+        EnballCount: false,
+        newGame: false,
+
+        numList: [],
+        randAnime: false,
+        nRange: 0,
+        ballCount: 0,
+        tempvar: 0,
+        running: false,
+        lastBall: null,
+        autoStop: false,
+        autoInterval: null,
+      }
+    },
+    methods: {
+      deleteBall: function (index) {
+        if (confirm("確定要刪除此球?")) {
+          this.numList.splice(index, 1);
+          this.ballCount = this.numList.length;
+        }
+      },
+      StopModeChange: function () {
+        return (this.stopMode == "0" ? this.setanimeTime = false : this.setanimeTime = true);
+      },
+      StopAnime: function () {
+        clearInterval(this.autoInterval);
+        this.running = false;
+        this.randEndBtn = false;
+        this.randStartBtn = (this.nRange == this.ballCount) ? false : true;
+      },
+      rand: function (min, max) {
+        min = Math.ceil(min);
+        max = Math.ceil(max);
+        return Math.floor(Math.random() * (max - min + 1) + min);
+      },
+      getRandBall: function () {
+        let nInput;
+        do {
+          nInput = this.rand(1, this.nRange);
+        } while (this.numList.indexOf(nInput) != -1);
+        return nInput;
+      },
+      RandomValue: function () {
+        this.randStartBtn = false;
+        this.randEndBtn = true;
+        this.running = true;
+        this.autoInterval = setInterval(() => {
+          if (this.ballCount >= this.nRange) {
+            clearInterval(this.autoInterval);
+            this.running = false;
+            this.randEndBtn = false;
+            return;
+          }
+
+          this.AddBall();
+        }, this.animeTime * 1000);
+
+      },
+      gameInit: function () {
+        this.nRange = parseInt(this.rangeMax, 10);
+        if (isNaN(this.nRange)) {
+          this.nRange = 75;
+        }
+        if (!this.autoSetting) {
+          this.manualMode = true;
+          this.EnballCount = true;
+          this.newGame = true;
+        } else {
+          this.autoInput = true;
+          this.manualMode = false;
+          this.EnballCount = true;
+          this.newGame = true;
+          if (this.stopMode == "1") {
+            this.autoStop = true;
+            this.randEndBtn = false;
+            this.animeTime = parseInt(this.animeTime, 10);
+            if (isNaN(this.animeTime)) {
+              this.animeTime = 1;
+            }
+          }
+        }
+        this.setRange = false;
+        this.setMode = false;
+        this.autoSetting = false;
+        this.setanimeTime = false;
+        this.rightBtn = false;
+      },
+      checkNumber: function (newBall) {
+        if (newBall > 0 && newBall <= this.nRange) {
+          if (this.numList.indexOf(newBall) == -1) {
+            return true;
+          }
+          return false;
+        }
+      },
+      AddBall: function () {
+        let sValue;
+        if (this.manualMode) {
+
+          if (this.checkNumber(this.valueInput)) {
+            sValue = this.valueInput;
+            this.valueInput = "";
+          } else {
+            alert("輸入不正確或您輸入了重複或過小或過大的數字!");
+            return false;
+          }
+        } else {
+          sValue = this.getRandBall();
+          this.running = true;
+        }
+        this.numList.push(sValue);
+        this.ballCount = this.numList.length;
+        this.lastBall = this.numList[this.numList.length - 1];
+        return true;
+      },
+      Reload: function () {
+        if (window.confirm("此動作會將畫面上所有的號碼清掉\r\n確定開新遊戲?")) {
+          numList = null;
+          window.location.reload();
+        }
+      },
+      SetModeChange: function () {
+        if (this.selMode == "0") {
+          this.autoSetting = false;
+          this.setanimeTime = false;
+        } else {
+          this.autoSetting = true;
+        }
+      },
+    },
+    computed: {
+      displayNumber01: {
+        get() {
+          clearInterval(this.randAnime);
+          if (this.running) {
+            this.randAnime = window.setInterval(function () {
+              this.tempvar = this.rand(1, 99);
+            }.bind(this), 50);
+            return (this.tempvar);
+          } else {
+            return (this.lastBall);
+          }
+        },
+      },
+    }
+  });
+  newVue3.mount('#bingoContent');
+</script>
+
+</html>
